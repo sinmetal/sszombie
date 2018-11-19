@@ -56,7 +56,14 @@ func main() {
 }
 
 func query(ctx context.Context, client *spanner.Client) error {
+	ctx, span := startSpan(ctx, "query")
+	defer span.End()
+
 	return client.Single().Query(ctx, spanner.NewStatement("SELECT 1")).Do(func(r *spanner.Row) error {
 		return nil
 	})
+}
+
+func startSpan(ctx context.Context, name string) (context.Context, *trace.Span) {
+	return trace.StartSpan(ctx, fmt.Sprintf("/sszombie/%s", name))
 }
