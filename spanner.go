@@ -9,6 +9,9 @@ import (
 )
 
 func CreateClient(ctx context.Context, db string, spannerMinOpened uint64) *spanner.Client {
+	ctx, span := startSpan(ctx, "createClient")
+	defer span.End()
+
 	o := spanner.ClientConfig{
 		SessionPoolConfig: spanner.SessionPoolConfig{
 			MinOpened:           spannerMinOpened,
