@@ -8,12 +8,14 @@ import (
 	"strconv"
 	"time"
 
-	"cloud.google.com/go/spanner"
 	"contrib.go.opencensus.io/exporter/stackdriver"
+	"github.com/google/uuid"
 	"go.opencensus.io/trace"
 )
 
 func main() {
+	log.Println("sszombie is ignite")
+
 	projectID, err := GetProjectID()
 	if err != nil {
 		panic(err)
@@ -43,25 +45,49 @@ func main() {
 	ctx := context.Background()
 	client := CreateClient(ctx, spannerDatabase, spannerMinOpened)
 
-	for {
-		ctx := context.Background()
-		if err := query(ctx, client); err != nil {
-			log.Printf("failed spanner.Query. err = %+v\n", err)
-		} else {
-			log.Println("success spanner.Query.")
-
-		}
-		time.Sleep(90 * time.Minute)
+	ts := TweetStore{
+		sc: client,
 	}
-}
 
-func query(ctx context.Context, client *spanner.Client) error {
-	ctx, span := startSpan(ctx, "query")
-	defer span.End()
+	const endCount = 90
+	const intervalMinute = 190
+	errCh := make(chan error)
+	go func() {
+		for i := 0; i < endCount; i++ {
+			ctx := context.Background()
 
-	return client.Single().Query(ctx, spanner.NewStatement("SELECT 1")).Do(func(r *spanner.Row) error {
-		return nil
-	})
+			if err := ts.QueryRandomSampling(ctx); err != nil {
+				log.Printf("failed spanner.Query. err = %+v\n", err)
+			} else {
+				log.Println("success spanner.Query.")
+
+			}
+			time.Sleep(intervalMinute * time.Minute)
+		}
+		errCh <- nil
+	}()
+
+	go func() {
+		for i := 0; i < endCount; i++ {
+			ctx := context.Background()
+
+			id := uuid.New().String()
+			if err := ts.Insert(ctx, id); err != nil {
+				log.Printf("failed spanner.Insert. err = %+v\n", err)
+			} else {
+				log.Printf("success spanner.Insert. id = %+v\n", id)
+			}
+			time.Sleep(intervalMinute * time.Minute)
+		}
+
+		errCh <- nil
+	}()
+
+	err = <-errCh
+	if err != nil {
+		log.Fatalf("failed err = %+v", err)
+	}
+	log.Println("sszombie is done")
 }
 
 func startSpan(ctx context.Context, name string) (context.Context, *trace.Span) {
