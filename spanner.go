@@ -8,13 +8,14 @@ import (
 	"cloud.google.com/go/spanner"
 )
 
-func CreateClient(ctx context.Context, db string, spannerMinOpened uint64) *spanner.Client {
+func CreateClient(ctx context.Context, db string, spannerMinOpened uint64, writeSession float64) *spanner.Client {
 	ctx, span := startSpan(ctx, "createClient")
 	defer span.End()
 
 	o := spanner.ClientConfig{
 		SessionPoolConfig: spanner.SessionPoolConfig{
 			MinOpened:           spannerMinOpened,
+			WriteSessions:       writeSession,
 			HealthCheckInterval: 24 * time.Hour,
 		},
 	}

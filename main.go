@@ -32,6 +32,17 @@ func main() {
 	}
 	spannerMinOpened := uint64(v)
 
+	var spannerWriteSession float64
+	{
+		spannerWriteSessionParam := os.Getenv("SPANNER_WRITE_SESSION")
+		fmt.Printf("Env spannerWriteSession:%s\n", spannerWriteSessionParam)
+		v, err := strconv.ParseFloat(spannerWriteSessionParam, 64)
+		if err != nil {
+			panic(err)
+		}
+		spannerWriteSession = v
+	}
+
 	// Create and register a OpenCensus Stackdriver Trace exporter.
 	exporter, err := stackdriver.NewExporter(stackdriver.Options{
 		ProjectID: projectID,
@@ -44,7 +55,7 @@ func main() {
 	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()}) // defaultでは10,000回に1回のサンプリングになっているが、リクエストが少ないと出てこないので、とりあえず全部出す
 
 	ctx := context.Background()
-	client := CreateClient(ctx, spannerDatabase, spannerMinOpened)
+	client := CreateClient(ctx, spannerDatabase, spannerMinOpened, spannerWriteSession)
 
 	ts := TweetStore{
 		sc: client,

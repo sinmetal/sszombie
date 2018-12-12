@@ -5,3 +5,4 @@ metadata:
 data:
   SPANNER_DATABASE: projects/{project-id}/instances/{instance-id}/databases/{database}
   SPANNER_MIN_OPENED: "10"
+  SPANNER_WRITE_SESSION: "0.6"
