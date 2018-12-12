@@ -67,7 +67,7 @@ func main() {
 	}
 
 	const endCount = 90
-	const intervalMinute = 190
+	const intervalMinute = 33
 	errCh := make(chan error)
 	go func() {
 		for i := 0; i < endCount; i++ {
@@ -75,6 +75,7 @@ func main() {
 
 			if err := ts.Update(ctx, tl[rand.Intn(99)].ID); err != nil {
 				log.Printf("failed spanner.Update. err = %+v\n", err)
+				errCh <- err
 			} else {
 				log.Println("success spanner.Update.")
 
@@ -91,6 +92,7 @@ func main() {
 			id := uuid.New().String()
 			if err := ts.Insert(ctx, id); err != nil {
 				log.Printf("failed spanner.Insert. err = %+v\n", err)
+				errCh <- err
 			} else {
 				log.Printf("success spanner.Insert. id = %+v\n", id)
 			}
