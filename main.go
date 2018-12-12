@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"strconv"
 	"time"
@@ -49,6 +50,11 @@ func main() {
 		sc: client,
 	}
 
+	tl, err := ts.QueryRandomSampling(ctx)
+	if err != nil {
+		panic(err)
+	}
+
 	const endCount = 90
 	const intervalMinute = 190
 	errCh := make(chan error)
@@ -56,10 +62,10 @@ func main() {
 		for i := 0; i < endCount; i++ {
 			ctx := context.Background()
 
-			if err := ts.QueryRandomSampling(ctx); err != nil {
-				log.Printf("failed spanner.Query. err = %+v\n", err)
+			if err := ts.Update(ctx, tl[rand.Intn(99)].ID); err != nil {
+				log.Printf("failed spanner.Update. err = %+v\n", err)
 			} else {
-				log.Println("success spanner.Query.")
+				log.Println("success spanner.Update.")
 
 			}
 			time.Sleep(intervalMinute * time.Minute)
